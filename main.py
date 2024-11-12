@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import tkinter as tk
 from tkinter import simpledialog, messagebox
+from tkinter import ttk
 
 # Folder dataset untuk menyimpan data wajah
 DATASET_DIR = './dataset'
@@ -15,18 +16,26 @@ if not os.path.exists(DATASET_DIR):
 def record_face():
     name = simpledialog.askstring("Input", "Masukkan Nama:")
     nim = simpledialog.askstring("Input", "Masukkan NIM:")
-    
+
     if not name or not nim:
         messagebox.showerror("Input Error", "Nama dan NIM harus diisi.")
         return
     
     # Membuka kamera
     cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        messagebox.showerror("Kamera Error", "Tidak dapat membuka kamera.")
+        return
+
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     
     count = 0
     while count < 10:  # Mengambil 10 gambar wajah
         ret, frame = cap.read()
+        if not ret:
+            messagebox.showerror("Kamera Error", "Tidak dapat membaca frame dari kamera.")
+            break
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
         
@@ -40,7 +49,7 @@ def record_face():
         
         cv2.imshow("Rekam Wajah", frame)
         
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) == ord('q'):
             break
     
     cap.release()
@@ -109,10 +118,18 @@ def scan_face():
                 current_id += 1
 
     cap = cv2.VideoCapture(0)
+    if not cap.isOpened():
+        messagebox.showerror("Kamera Error", "Tidak dapat membuka kamera.")
+        return
+
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     
     while True:
         ret, frame = cap.read()
+        if not ret:
+            messagebox.showerror("Kamera Error", "Tidak dapat membaca frame dari kamera.")
+            break
+
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3, 5)
         
@@ -134,7 +151,7 @@ def scan_face():
         
         cv2.imshow("Scan Wajah", frame)
         
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) == ord('q'):
             break
     
     cap.release()
@@ -144,13 +161,23 @@ def scan_face():
 def create_gui():
     root = tk.Tk()
     root.title("Face Recognition")
+    root.geometry("400x300")
+    root.configure(bg="#f0f0f0")
 
-    # Tombol rekam wajah
-    record_button = tk.Button(root, text="Rekam Wajah", command=record_face)
+    # Style for buttons
+    style = ttk.Style()
+    style.configure("TButton", font=("Helvetica", 14), padding=10)
+
+    # Title label
+    title_label = tk.Label(root, text="Face Recognition System", font=("Helvetica", 18, "bold"), bg="#f0f0f0", fg="#333")
+    title_label.pack(pady=20)
+
+    # Rekam Wajah button
+    record_button = ttk.Button(root, text="Rekam Wajah", command=record_face)
     record_button.pack(pady=10)
     
-    # Tombol scan wajah
-    scan_button = tk.Button(root, text="Scan Wajah", command=scan_face)
+    # Scan Wajah button
+    scan_button = ttk.Button(root, text="Scan Wajah", command=scan_face)
     scan_button.pack(pady=10)
 
     root.mainloop()
