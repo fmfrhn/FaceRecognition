@@ -4,6 +4,7 @@ import numpy as np
 import tkinter as tk
 from tkinter import simpledialog, messagebox
 from tkinter import ttk
+import matplotlib.pyplot as plt  # Tambahkan import ini di bagian atas program
 
 # Folder dataset untuk menyimpan data wajah
 DATASET_DIR = './dataset'
@@ -11,6 +12,31 @@ DATASET_DIR = './dataset'
 # Membuat folder dataset jika belum ada
 if not os.path.exists(DATASET_DIR):
     os.makedirs(DATASET_DIR)
+
+# Fungsi untuk menampilkan histogram dataset
+def show_dataset_histogram():
+    if not os.listdir(DATASET_DIR):
+        messagebox.showwarning("Dataset Kosong", "Tidak ada data dalam dataset untuk ditampilkan.")
+        return
+
+    histogram = np.zeros(256, dtype=int)  # Inisialisasi array histogram
+
+    for file_name in os.listdir(DATASET_DIR):
+        if file_name.endswith(".jpg"):
+            img_path = os.path.join(DATASET_DIR, file_name)
+            img = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+            hist = cv2.calcHist([img], [0], None, [256], [0, 256])
+            histogram += hist.flatten().astype(int)  # Gabungkan histogram setiap gambar
+
+    # Plot histogram
+    plt.figure(figsize=(10, 6))
+    plt.title("Histogram Dataset")
+    plt.xlabel("Pixel Intensity")
+    plt.ylabel("Frequency")
+    plt.plot(histogram, color='blue')
+    plt.xlim([0, 256])
+    plt.grid(True)
+    plt.show()
 
 # Fungsi untuk merekam wajah
 def record_face():
@@ -30,7 +56,7 @@ def record_face():
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
     
     count = 0
-    while count < 10:  # Mengambil 10 gambar wajah
+    while count < 20:  # Mengambil 10 gambar wajah
         ret, frame = cap.read()
         if not ret:
             messagebox.showerror("Kamera Error", "Tidak dapat membaca frame dari kamera.")
@@ -46,7 +72,7 @@ def record_face():
             file_path = os.path.join(DATASET_DIR, f"{name}_{nim}_{count}.jpg")
             cv2.imwrite(file_path, face)  # Simpan gambar wajah
             cv2.rectangle(frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        
+
         cv2.imshow("Rekam Wajah", frame)
         
         if cv2.waitKey(1) == ord('q'):
@@ -61,7 +87,7 @@ def record_face():
         messagebox.showinfo("Training Selesai", "Model berhasil dilatih dengan dataset yang ada.")
     else:
         messagebox.showerror("Training Gagal", "Gagal melatih model. Tambahkan lebih banyak gambar.")
-
+        
 # Fungsi untuk melatih model LBPH untuk pengenalan wajah
 def train_model():
     images = []
@@ -161,7 +187,7 @@ def scan_face():
 def create_gui():
     root = tk.Tk()
     root.title("Face Recognition")
-    root.geometry("400x300")
+    root.geometry("400x400")
     root.configure(bg="#f0f0f0")
 
     # Style for buttons
@@ -179,6 +205,10 @@ def create_gui():
     # Scan Wajah button
     scan_button = ttk.Button(root, text="Scan Wajah", command=scan_face)
     scan_button.pack(pady=10)
+
+    # Tampilkan Histogram Dataset button
+    histogram_button = ttk.Button(root, text="Tampilkan Histogram Dataset", command=show_dataset_histogram)
+    histogram_button.pack(pady=10)
 
     root.mainloop()
 
